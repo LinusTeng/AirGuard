@@ -8,17 +8,18 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      # 針對你看到的警告，強制使用 Node 24 環境（2026年標準）
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
+      # 1. 使用 v4 以上版本
       - name: 檢出代碼
-        uses: actions/checkout@v4 # 升級到 v4
+        uses: actions/checkout@v4 
 
+      # 2. 使用 v5 以上版本，並明確指定 Node 版本
       - name: 設定 Python
-        uses: actions/setup-python@v5 # 升級到 v5
+        uses: actions/setup-python@v5
         with:
           python-version: '3.9'
+          # 這行可以幫助一些舊套件在 Node 24 環境下更穩定
+          cache: 'pip'
 
       - name: 安裝套件
         run: |
@@ -26,7 +27,7 @@ jobs:
 
       - name: 執行抓取腳本
         env:
-          MY_API_KEY: ${{ secrets.MY_API_KEY }} 
+          MY_API_KEY: ${{ secrets.MY_API_KEY }}
         run: |
           python ag.py
 
@@ -35,6 +36,5 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add airguard_all_taiwan_data.csv
-          # 加上 || true 確保即使沒有新數據（檔案沒變）也不會報錯
-          git commit -m "Auto-update AQI data: $(date)" || true
+          git commit -m "Auto-update AQI data: $(date)" || exit 0
           git push
