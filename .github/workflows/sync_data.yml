@@ -2,18 +2,21 @@ name: AirGuard Data Sync
 
 on:
   schedule:
-    - cron: '0 * * * *' # 每小時的 0 分自動執行
-  workflow_dispatch: # 允許你手動在 GitHub 網頁上點擊執行
+    - cron: '0 * * * *' 
+  workflow_dispatch: 
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      # 針對你看到的警告，強制使用 Node 24 環境（2026年標準）
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - name: 檢出代碼
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4 # 升級到 v4
 
       - name: 設定 Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5 # 升級到 v5
         with:
           python-version: '3.9'
 
@@ -23,7 +26,7 @@ jobs:
 
       - name: 執行抓取腳本
         env:
-          MY_API_KEY: ${{ secrets.MY_API_KEY }} # 為了安全，我們把 API KEY 藏起來
+          MY_API_KEY: ${{ secrets.MY_API_KEY }} 
         run: |
           python ag.py
 
@@ -32,5 +35,6 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add airguard_all_taiwan_data.csv
-          git commit -m "Auto-update AQI data: $(date)" || exit 0
+          # 加上 || true 確保即使沒有新數據（檔案沒變）也不會報錯
+          git commit -m "Auto-update AQI data: $(date)" || true
           git push
