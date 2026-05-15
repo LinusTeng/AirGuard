@@ -1,0 +1,36 @@
+name: AirGuard Data Sync
+
+on:
+  schedule:
+    - cron: '0 * * * *' # 每小時的 0 分自動執行
+  workflow_dispatch: # 允許你手動在 GitHub 網頁上點擊執行
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 檢出代碼
+        uses: actions/checkout@v3
+
+      - name: 設定 Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: 安裝套件
+        run: |
+          pip install -r requirements.txt
+
+      - name: 執行抓取腳本
+        env:
+          MY_API_KEY: ${{ secrets.MY_API_KEY }} # 為了安全，我們把 API KEY 藏起來
+        run: |
+          python ag.py
+
+      - name: 提交並推回數據
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add airguard_all_taiwan_data.csv
+          git commit -m "Auto-update AQI data: $(date)" || exit 0
+          git push
