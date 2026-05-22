@@ -2,14 +2,25 @@ import requests
 import urllib3
 import csv
 import os
-# 修改這一行：優先讀取環境變數，如果沒有則用你原本的 Key (本地測試用)
-MY_API_KEY = os.getenv("MY_API_KEY", "30bfc266-c59f-4fb2-b4f0-de366d444031")
-from datetime import datetime
+import sys
 
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+# 嘗試讀取本地的 .env 檔案（如果有的話）
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    # 雲端環境不需要 python-dotenv，因為 GitHub Actions 會直接注入環境變數
+    pass
 
-MY_API_KEY = "30bfc266-c59f-4fb2-b4f0-de366d444031" 
-API_URL = "https://data.moenv.gov.tw/api/v2/aqx_p_432" 
+# 核心安全修改：絕對不寫出明文字串，只從系統環境變數讀取
+MY_API_KEY = os.getenv("MY_API_KEY")
+
+if not MY_API_KEY:
+    print("❌ 錯誤：找不到 API 金鑰 (MY_API_KEY)！")
+    print("本地開發：請確保已建立 .env 檔案並設定金鑰。")
+    print("雲端執行：請確保 GitHub Settings -> Secrets 中已設定 MY_API_KEY。")
+    sys.exit(1) # 強制停止程式
+
 CSV_FILE = "airguard_all_taiwan_data.csv"
 
 def save_to_csv(data_list):
